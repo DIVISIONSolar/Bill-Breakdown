@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Subscriptions</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        #totalAmount {
+            text-align: center;
+            font-size: 24px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body onload="convertCurrencies()">
+    <div>
+        <h2>Bill Breakdown</h2>
+        <table>
+            <tr>
+                <th>Subscription</th>
+                <th>Interval</th>
+                <th>Amount (USD)</th>
+            </tr>
+            <tbody id="subscriptionTable"></tbody>
+        </table>
+    </div>
+    <div id="totalAmount">
+        <p>Total Monthly: <span id="totalMonthly"></span> USD</p>
+        <p>Total Annually: <span id="totalAnnually"></span> USD</p>
+    </div>    
+
+    <script>
+        function convertCurrencies() {
+            const API_KEY = 'KEY';
+            const endpoint = 'https://api.wise.com/v1/rates';
+    
+            const headers = {
+                'Authorization': `Bearer ${API_KEY}`
+            };
+    
+            const params = new URLSearchParams({
+                source: 'USD',
+                target: 'EUR'
+            });
+    
+            fetch(`${endpoint}?${params}`, { headers })
+                .then(response => response.json())
+                .then(data => {
+                    const exchangeRate = data[0].rate;
+    
+                    const subscriptions = [
+                        { name: 'Subscription #1', interval: 'Monthly', amountEUR: 24.36 },
+                        { name: 'Subscription #2', interval: 'Monthly', amountUSD: 25.00 },
+                        { name: 'Subscription #3', interval: 'Monthly', amountUSD: 10.00 },
+                        { name: 'Subscription #4', interval: 'Annually', amountUSD: 100.00 },
+                        { name: 'Subscription #5', interval: 'Annually', amountUSD: 120.00 },
+                        { name: 'Subscription #6', interval: 'Annually', amountUSD: 156.82 }
+                    ];
+    
+                    let totalMonthly = 0;
+                    let totalAnnually = 0;
+    
+                    const subscriptionTable = document.getElementById('subscriptionTable');
+    
+                    subscriptions.forEach(subscription => {
+                        const row = subscriptionTable.insertRow();
+    
+                        const nameCell = row.insertCell(0);
+                        const intervalCell = row.insertCell(1);
+                        const amountUSDCell = row.insertCell(2);
+    
+                        if (subscription.amountUSD) {
+                            const amountUSD = subscription.amountUSD;
+    
+                            if (subscription.interval === 'Monthly') {
+                                totalMonthly += amountUSD;
+                            } else if (subscription.interval === 'Annually') {
+                                totalAnnually += amountUSD;
+                            }
+    
+                            nameCell.textContent = subscription.name;
+                            intervalCell.textContent = subscription.interval;
+                            amountUSDCell.textContent = amountUSD.toFixed(2);
+                        } else if (subscription.amountEUR) {
+                            const amountEUR = subscription.amountEUR;
+                            const amountUSD = (subscription.amountEUR / exchangeRate);
+    
+                            if (subscription.interval === 'Monthly') {
+                                totalMonthly += amountUSD;
+                            } else if (subscription.interval === 'Annually') {
+                                totalAnnually += amountUSD;
+                            }
+    
+                            nameCell.textContent = subscription.name;
+                            intervalCell.textContent = subscription.interval;
+                            amountUSDCell.textContent = amountUSD.toFixed(2);
+                        }
+                    });
+    
+                    const totalMonthlyLabel = document.getElementById('totalMonthly');
+                    const totalAnnuallyLabel = document.getElementById('totalAnnually');
+    
+                    totalMonthlyLabel.textContent = totalMonthly.toFixed(2);
+                    totalAnnuallyLabel.textContent = totalAnnually.toFixed(2);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+    </script>
+</body>
+</html>
